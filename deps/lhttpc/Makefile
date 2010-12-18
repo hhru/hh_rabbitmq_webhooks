@@ -1,60 +1,37 @@
-APPLICATION := lhttpc
-APP_FILE := ebin/$(APPLICATION).app
-SOURCES := $(wildcard src/*.erl)
-HEADERS := $(wildcard src/*.hrl)
-MODULES := $(patsubst src/%.erl,%,$(SOURCES))
-BEAMS := $(patsubst %,ebin/%.beam,$(MODULES))
+GIT_UPSTREAM=https://github.com/oscarh/lhttpc.git
+GIT_REVISION=1cd58a679bf8e0103a88869d92495d6c05807d7f
 
-comma := ,
-e :=
-space := $(e) $(e)
-MODULELIST := $(subst $(space),$(comma),$(MODULES))
+EBIN_DIR=ebin
+INCLUDE_DIR=include
 
-TEST_SOURCES := $(wildcard test/*.erl)
-TEST_BEAMS := $(patsubst %.erl,%.beam, $(TEST_SOURCES))
+LIB_PACKAGE=lhttpc
+LIB_PACKAGE_DIR=$(LIB_PACKAGE)
+LIB_PACKAGE_NAME=$(LIB_PACKAGE).ez
 
-include vsn.mk
+CHECKOUT_DIR=$(LIB_PACKAGE_DIR)-git
 
-.PHONY: all clean dialyzer
+TARGETS=$(LIB_PACKAGE_NAME)
 
-all: $(APPLICATION) doc
-
-$(APPLICATION): $(BEAMS) $(APP_FILE)
-
-test: $(APPLICATION) $(TEST_BEAMS)
-	@echo Running tests
-	@erl -pa ebin/ -pa test/ -noinput -eval 'run_test:run()' -s erlang halt
-
-test/%.beam: test/%.erl
-	@echo Compiling $<
-	@erlc +debug_info -o test/ $<
-
-$(APP_FILE): src/$(APPLICATION).app.src vsn.mk 
-	@echo Generating $@
-	@sed -e 's/@MODULES@/$(MODULELIST)/' -e 's/@VSN@/$(VSN)/' $< > $@
-
-ebin/%.beam: src/%.erl $(HEADERS) $(filter-out $(wildcard ebin), ebin)
-	@echo Compiling $<
-	@erlc +debug_info -o ebin/ $<
-
-ebin:
-	@echo Creating ebin/
-	@mkdir ebin/
-
-doc: doc/edoc-info
-
-dialyzer:
-	@echo Running dialyzer on sources
-	@dialyzer --src -r src/
-
-doc/edoc-info: doc/overview.edoc $(SOURCES) 
-	@echo Generating documentation from edoc
-	@erl -noinput -eval 'edoc:application(lhttpc, "./", [{doc, "doc/"}])' -s erlang halt
+all: $(TARGETS)
 
 clean:
-	@echo Cleaning
-	@rm -f ebin/*.{beam,app} test/*.beam doc/*.{html,css,png} doc/edoc-info
-	@rm -rf cover_report
+	rm -rf $(EBIN_DIR)
+	rm -rf $(INCLUDE_DIR)
+	rm -rf $(LIB_PACKAGE_DIR) $(TARGETS)
 
-release: clean all test dialyzer
-	@util/releaser $(APPLICATION) $(VSN)
+distclean: clean
+	rm -rf $(CHECKOUT_DIR)
+
+$(LIB_PACKAGE_DIR): $(CHECKOUT_DIR)
+	cp -r $< $@
+
+$(CHECKOUT_DIR):
+	git clone $(GIT_UPSTREAM) $@
+	(cd $@; git checkout $(GIT_REVISION))
+
+%.ez: $(LIB_PACKAGE_DIR)
+	$(MAKE) -C $(LIB_PACKAGE_DIR) clean all
+	rm -rf $(EBIN_DIR) $(INCLUDE_DIR)
+	cp -r $(LIB_PACKAGE_DIR)/ebin $(EBIN_DIR)
+	zip $(LIB_PACKAGE_NAME) $(LIB_PACKAGE_DIR)/
+	zip -r $(LIB_PACKAGE_NAME) $(LIB_PACKAGE_DIR)/$(EBIN_DIR)/
