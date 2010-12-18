@@ -1,6 +1,6 @@
 -module(hh_rabbitmq_webhooks).
 -behaviour(gen_server).
--include_lib("amqp_client.hrl").
+-include_lib("amqp_client/include/amqp_client.hrl").
 -export([start_link/0, init/1,handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 -export([check_config/0, check_config/1]).
 -record(state, { channel, config, queue, consumer_tag, http_requests_pool_name, cache_tab_name}).
