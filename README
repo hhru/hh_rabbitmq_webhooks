@@ -1,1 +1,4 @@
 Webhooks RabbitMQ plugin.
+
+See build instructions at:
+http://www.rabbitmq.com/plugin-development.html
