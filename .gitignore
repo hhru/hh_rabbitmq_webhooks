@@ -1,2 +1,6 @@
+build/
 deps/lhttpc/ebin
-deps/lhttpc/lhttpc*
+deps/lhttpc/
+dist/
+ebin/*.app
+ebin/*.beam
