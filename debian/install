@@ -1,3 +1,0 @@
-ebin/lhttpc.ez             /usr/lib/rabbitmq/lib/rabbitmq_server-2.2.0/plugins
-ebin/hh_rabbitmq_webhooks.ez         /usr/lib/rabbitmq/lib/rabbitmq_server-2.2.0/plugins
-hh_rabbitmq_webhooks.config.example 	/etc/rabbitmq/

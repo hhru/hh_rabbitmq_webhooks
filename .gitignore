@@ -1,4 +1,8 @@
 build/
+debian/isntall
+debian/files
+debian/hh-rabbitmq-webhooks-plugin*
+debian/stamp-makefile-build
 deps/lhttpc/ebin
 deps/lhttpc/
 dist/
