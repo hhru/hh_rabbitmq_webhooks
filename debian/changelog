@@ -1,3 +1,9 @@
+hh-rabbitmq-webhooks-plugin (2.4.0-1) unstable; urgency=low
+
+  * 2.4.0 
+
+ -- Anton Lebedevich <a.lebedevich@hh.ru>  Tue, 29 Mar 2011 15:35:11 +0400
+
 hh-rabbitmq-webhooks-plugin (2.3.1-1) unstable; urgency=low
 
   * packaged for 2.3.1 
