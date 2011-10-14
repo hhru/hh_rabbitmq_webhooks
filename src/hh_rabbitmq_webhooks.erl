@@ -152,7 +152,7 @@ handle_info(#'basic.consume_ok'{ consumer_tag=_Tag }, State) ->
 %When message headers has valid format: [{<<"id">>,signedint,ID},{<<"docType">>,longstr,Entity}] send it or cache it
 handle_info({
 	#'basic.deliver'{ delivery_tag=DeliveryTag },  
-	#amqp_msg{ props=#'P_basic'{headers=  [{<<"id">>,signedint,ID},{<<"docType">>,longstr,Entity}]=Headers  }}=AmqpMsg
+	#amqp_msg{ props=#'P_basic'{headers=  [{<<"id">>,signedint,ID}|[{<<"docType">>,longstr,Entity}|_]]=Headers  }}=AmqpMsg
 	}, 
 	State=#state{ channel=Channel, config=Config, http_requests_pool_name=PName, cache_tab_name=Tab})
 	when is_integer(ID) andalso is_binary(Entity) ->
