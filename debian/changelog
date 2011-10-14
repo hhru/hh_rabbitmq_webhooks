@@ -1,3 +1,9 @@
+hh-rabbitmq-webhooks-plugin (2.4.0-2) unstable; urgency=low
+
+  * 2.4.0 
+
+ -- Kirill Didenko <altaire@example.com>  Tue, 28 Sep 2011 20:33:12 +0400
+
 hh-rabbitmq-webhooks-plugin (2.4.0-1) unstable; urgency=low
 
   * 2.4.0 
