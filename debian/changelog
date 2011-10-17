@@ -1,3 +1,9 @@
+hh-rabbitmq-webhooks-plugin (2.4.0-3) unstable; urgency=low
+
+  * HH-22612 for new message format
+
+ -- Vasily Katraev (hh.ru) <v.katraev@hh.ru>  Mon, 17 Oct 2011 15:27:40 +0400
+
 hh-rabbitmq-webhooks-plugin (2.4.0-2) unstable; urgency=low
 
   * 2.4.0 
