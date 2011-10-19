@@ -161,7 +161,7 @@ handle_info({
 	case HeaderNeeded of 
 		
 		%When message headers has {<<"id">>,_,_},{<<"docType">>,_,_} in Headers send it or cache it
-		{{<<"id">>,signedint,ID},{<<"docType">>,longstr,ENTITY}} -> 
+		{{<<"id">>,signedint,ID},{<<"docType">>,longstr,Entity}} -> 
 
 			%~ rabbit_log:info("Webhooks: Get valid message : ~p \nMessage headers: ~p  Tag ~p in ~p \n", [AmqpMsg, Headers, DeliveryTag, now()]),
 			PostMsg = binary_to_list(Entity) ++ ":" ++ integer_to_list(ID) ++ " ",
@@ -199,7 +199,7 @@ handle_info({
 		{_,_} -> 
 			rabbit_log:warning("Webhooks: Get invalid message: ~p \n Message headers: ~p \n Delete it \n", [AmqpMsg, Headers]),
 			amqp_channel:call(Channel, #'basic.ack'{ delivery_tag=DeliveryTag }),
-			noreply, State}
+			{noreply, State}
 	
 	end;
 
