@@ -149,57 +149,61 @@ handle_info(#'basic.cancel_ok'{ consumer_tag=_Tag }, State) ->
 handle_info(#'basic.consume_ok'{ consumer_tag=_Tag }, State) ->
 	{noreply, State};
 
-%When message headers has valid format: [{<<"id">>,signedint,ID},{<<"docType">>,longstr,Entity}] send it or cache it
+
 handle_info({
-	#'basic.deliver'{ delivery_tag=DeliveryTag },  
-	#amqp_msg{ props=#'P_basic'{headers=  [{<<"id">>,signedint,ID}|[{<<"docType">>,longstr,Entity}|_]]=Headers  }}=AmqpMsg
+	#'basic.deliver'{delivery_tag=DeliveryTag}=Mode,  
+	#amqp_msg{ props=#'P_basic'{headers=Headers}}=AmqpMsg
 	}, 
-	State=#state{ channel=Channel, config=Config, http_requests_pool_name=PName, cache_tab_name=Tab})
-	when is_integer(ID) andalso is_binary(Entity) ->
-
-	%~ rabbit_log:info("Webhooks: Get valid message : ~p \nMessage headers: ~p  Tag ~p in ~p \n", [AmqpMsg, Headers, DeliveryTag, now()]),
-	PostMsg = binary_to_list(Entity) ++ ":" ++ integer_to_list(ID) ++ " ",
-	ets:insert(Tab, {DeliveryTag, PostMsg, now(), noref}),
-
-	PoolSize = length(pg2:get_local_members(PName)),
-	%~ rabbit_log:info("Webhooks: Alive http connections: ~p\n", [PoolSize]),
+	State=#state{ channel=Channel, config=Config, http_requests_pool_name=PName, cache_tab_name=Tab}) ->
 	
-	case PoolSize < proplists:get_value(max_alive_http_connections, Config) of
-		true ->
-			Ref = make_ref(),
-			ets:update_element(Tab, DeliveryTag, [{?RefPosInETS,Ref}]),
+	HeaderNeeded = {lists:keyfind(<<"id">>, 1, Headers), lists:keyfind(<<"docType">>, 1, Headers)},
+	
+	case HeaderNeeded of 
+		
+		%When message headers has {<<"id">>,_,_},{<<"docType">>,_,_} in Headers send it or cache it
+		{{<<"id">>,signedint,ID},{<<"docType">>,longstr,ENTITY}} -> 
 
-			TagsList = case ets:match(Tab, {'$1','_','_',noref}, proplists:get_value(max_messages_in_post, Config)) of
-				'$end_of_table' -> 
-					[];
-				{TgList, _} ->
-					 lists:concat(TgList)
-			end,
+			%~ rabbit_log:info("Webhooks: Get valid message : ~p \nMessage headers: ~p  Tag ~p in ~p \n", [AmqpMsg, Headers, DeliveryTag, now()]),
+			PostMsg = binary_to_list(Entity) ++ ":" ++ integer_to_list(ID) ++ " ",
+			ets:insert(Tab, {DeliveryTag, PostMsg, now(), noref}),
+
+			PoolSize = length(pg2:get_local_members(PName)),
+			%~ rabbit_log:info("Webhooks: Alive http connections: ~p\n", [PoolSize]),
+	
+			case PoolSize < proplists:get_value(max_alive_http_connections, Config) of
+				true ->
+					Ref = make_ref(),
+					ets:update_element(Tab, DeliveryTag, [{?RefPosInETS,Ref}]),
+
+					TagsList = case ets:match(Tab, {'$1','_','_',noref}, proplists:get_value(max_messages_in_post, Config)) of
+						'$end_of_table' -> 
+							[];
+						{TgList, _} ->
+							 lists:concat(TgList)
+					end,
+				
+					%~ rabbit_log:info("Webhooks: Get free messages from cache ~w (cache size ~p)\n", [TagsList, ets:info(Tab,size)]),
+					update_refs(Tab, Ref, TagsList),
+					%~ rabbit_log:info("Webhooks: Now messages ~w have ref ~p\n", [ ets:match(Tab, {'$1','_','_',Ref}), Ref]),
+
+					%~ send_request(Channel, Ref, Config, Tab);
+					Pid = spawn( fun() -> send_request(Channel, Ref, Config, Tab) end),
+					pg2:join(PName, Pid);
 			
-			%~ rabbit_log:info("Webhooks: Get free messages from cache ~w (cache size ~p)\n", [TagsList, ets:info(Tab,size)]),
-			update_refs(Tab, Ref, TagsList),
-			%~ rabbit_log:info("Webhooks: Now messages ~w have ref ~p\n", [ ets:match(Tab, {'$1','_','_',Ref}), Ref]),
+				false ->
+					do_nothing
+					%~ rabbit_log:info("Webhooks: Add message ~p with tag ~p to cache only in ~p (cache size ~p) \n", [PostMsg, DeliveryTag, now(), ets:info(Tab,size)])
+			end;
+		
+		%When message headers has invalid format - delete it
+		{_,_} -> 
+			rabbit_log:warning("Webhooks: Get invalid message: ~p \n Message headers: ~p \n Delete it \n", [AmqpMsg, Headers]),
+			amqp_channel:call(Channel, #'basic.ack'{ delivery_tag=DeliveryTag }),
+			noreply, State}
+	
+	end;
 
-			%~ send_request(Channel, Ref, Config, Tab);
-			Pid = spawn( fun() -> send_request(Channel, Ref, Config, Tab) end),
-			pg2:join(PName, Pid);
-			
-		false ->
-			do_nothing
-			%~ rabbit_log:info("Webhooks: Add message ~p with tag ~p to cache only in ~p (cache size ~p) \n", [PostMsg, DeliveryTag, now(), ets:info(Tab,size)])
-	end,
-	{noreply, State};
 
-%When message headers has invalid format - delete it
-handle_info({
-	#'basic.deliver'{ delivery_tag=DeliveryTag },  
-	#amqp_msg{ props=#'P_basic'{headers=Headers}} =AmqpMsg
-	}, 
-	State=#state{ channel=Channel})->
-
-	rabbit_log:warning("Webhooks: Get invalid message: ~p \n Message headers: ~p \n Delete it \n", [AmqpMsg, Headers]),
-	amqp_channel:call(Channel, #'basic.ack'{ delivery_tag=DeliveryTag }),
-	{noreply, State};
 
 handle_info(Msg, State) ->
 	rabbit_log:warning("Webhooks:  Unkown message: ~p~n State: ~p~n", [Msg, State]),
