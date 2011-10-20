@@ -1,5 +1,5 @@
 build/
-debian/isntall
+debian/install
 debian/files
 debian/hh-rabbitmq-webhooks-plugin*
 debian/stamp-makefile-build
