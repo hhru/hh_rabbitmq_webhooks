@@ -1,3 +1,9 @@
+hh-rabbitmq-webhooks-plugin (2.4.0-4) unstable; urgency=low
+
+  * HH-22612 added parsing headers in any order
+
+ -- Vasily Katraev (hh.ru) <v.katraev@hh.ru>  Thu, 20 Oct 2011 12:29:10 +0400
+
 hh-rabbitmq-webhooks-plugin (2.4.0-3) unstable; urgency=low
 
   * HH-22612 for new message format
