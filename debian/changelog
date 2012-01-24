@@ -1,3 +1,9 @@
+hh-rabbitmq-webhooks-plugin (2.7.1-0) unstable; urgency=low
+
+  * up rabbitmq and amqp-client version to 2.7.1
+
+ -- Pavel Martyshev <martyshev@hh.ru>  Tue, 24 Jan 2012 15:49:48 +0400
+
 hh-rabbitmq-webhooks-plugin (2.4.0-4) unstable; urgency=low
 
   * HH-22612 added parsing headers in any order

@@ -3,4 +3,4 @@ APPNAME=hh_rabbitmq_webhooks
 DEPS=rabbitmq-server rabbitmq-erlang-client
 INTERNAL_DEPS=lhttpc
 
-include ../include.mk
+include ../umbrella.mk

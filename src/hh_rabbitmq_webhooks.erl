@@ -22,7 +22,7 @@ start_link() ->
 init([Config]) ->
 	rabbit_log:info("Webhooks: Initializing.. \n", []),
 	
-	{ok, Connection} = amqp_connection:start(direct),
+        {ok, Connection} = amqp_connection:start(#amqp_params_direct{}),
 	rabbit_log:info("Webhooks: direct connection opened: ~p  ... \n", [Connection]),
 
 	{ok, Channel} = amqp_connection:open_channel(Connection),
